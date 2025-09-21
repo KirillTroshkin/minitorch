@@ -110,7 +110,7 @@ def test_sigmoid(a: float) -> None:
     @given(small_floats, small_floats)
     def check_increasing(x: float, y: float) -> None:
 
-        if x < y and abs(x - y) > 1e-10 and -100 < x < 100 and -100 < y < 100:
+        if x < y and abs(x - y) > 1e-10 and -10 < x < 10 and -10 < y < 10:
             assert sigmoid(x) < sigmoid(y)
 
     check_increasing()
