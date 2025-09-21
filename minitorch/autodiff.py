@@ -1,7 +1,8 @@
 from dataclasses import dataclass
-from typing import Any, Iterable, List, Tuple
+from typing import Any, Iterable, Tuple
 
 from typing_extensions import Protocol
+
 
 def central_difference(f: Any, *vals: Any, arg: int = 0, epsilon: float = 1e-6) -> Any:
     r"""
@@ -26,28 +27,38 @@ def central_difference(f: Any, *vals: Any, arg: int = 0, epsilon: float = 1e-6) 
     f_minus = f(*vals_list)
     return (f_plus - f_minus) / (2 * epsilon)
 
+
 variable_count = 1
 
+
 class Variable(Protocol):
+
     def accumulate_derivative(self, x: Any) -> None:
+
         pass
 
     @property
     def unique_id(self) -> int:
+
         pass
 
     def is_leaf(self) -> bool:
+
         pass
 
     def is_constant(self) -> bool:
+
         pass
 
     @property
     def parents(self) -> Iterable["Variable"]:
+
         pass
 
     def chain_rule(self, d_output: Any) -> Iterable[Tuple["Variable", Any]]:
+
         pass
+
 
 def topological_sort(variable: Variable) -> Iterable[Variable]:
     """
@@ -63,6 +74,7 @@ def topological_sort(variable: Variable) -> Iterable[Variable]:
     result = []
 
     def dfs(var):
+
         if var in visited or var.history is None or var.history.last_fn is None:
             return
         visited.add(var)
@@ -73,6 +85,7 @@ def topological_sort(variable: Variable) -> Iterable[Variable]:
 
     dfs(variable)
     return result
+
 
 def backpropagate(variable: Variable, deriv: Any) -> None:
     """
@@ -92,8 +105,10 @@ def backpropagate(variable: Variable, deriv: Any) -> None:
     for input_var, input_deriv in variable.chain_rule(deriv):
         backpropagate(input_var, input_deriv)
 
+
 @dataclass
 class Context:
+
     """
     Context class is used by `Function` to store information during the forward pass.
     """
@@ -109,4 +124,5 @@ class Context:
 
     @property
     def saved_tensors(self) -> Tuple[Any, ...]:
+
         return self.saved_values

@@ -22,8 +22,10 @@ from .scalar_functions import (
 
 ScalarLike = Union[float, int, "Scalar"]
 
+
 @dataclass
 class ScalarHistory:
+
     """
     `ScalarHistory` stores the history of `Function` operations that was
     used to construct the current Variable.
@@ -39,9 +41,12 @@ class ScalarHistory:
     ctx: Optional[Context] = None
     inputs: Sequence[Scalar] = ()
 
+
 _var_count = 0
 
+
 class Scalar:
+
     """
     A reimplementation of scalar values for autodifferentiation
     tracking. Scalar Variables behave as close as possible to standard
@@ -57,6 +62,7 @@ class Scalar:
     name: str
 
     def __init__(
+
         self,
         v: float,
         back: ScalarHistory = ScalarHistory(),
@@ -74,54 +80,71 @@ class Scalar:
             self.name = str(self.unique_id)
 
     def __repr__(self) -> str:
+
         return "Scalar(%f)" % self.data
 
     def __mul__(self, b: ScalarLike) -> Scalar:
+
         return Mul.apply(self, b)
 
     def __truediv__(self, b: ScalarLike) -> Scalar:
+
         return Mul.apply(self, Inv.apply(b))
 
     def __rtruediv__(self, b: ScalarLike) -> Scalar:
+
         return Mul.apply(b, Inv.apply(self))
 
     def __add__(self, b: ScalarLike) -> Scalar:
+
         return Add.apply(self, b)
 
     def __bool__(self) -> bool:
+
         return bool(self.data)
 
     def __lt__(self, b: ScalarLike) -> Scalar:
+
         return LT.apply(self, b)
 
     def __gt__(self, b: ScalarLike) -> Scalar:
+
         return LT.apply(b, self)
 
     def __eq__(self, b: ScalarLike) -> Scalar:  # type: ignore[override]
+
         return EQ.apply(self, b)
 
     def __sub__(self, b: ScalarLike) -> Scalar:
+
         return Add.apply(self, Neg.apply(b))
 
     def __neg__(self) -> Scalar:
+
         return Neg.apply(self)
 
     def __radd__(self, b: ScalarLike) -> Scalar:
+
         return self + b
 
     def __rmul__(self, b: ScalarLike) -> Scalar:
+
         return self * b
 
     def log(self) -> Scalar:
+
         return Log.apply(self)
 
     def exp(self) -> Scalar:
+
         return Exp.apply(self)
 
     def sigmoid(self) -> Scalar:
+
         return Sigmoid.apply(self)
 
     def relu(self) -> Scalar:
+
         return ReLU.apply(self)
 
     # Variable elements for backprop
@@ -144,14 +167,17 @@ class Scalar:
         return self.history is not None and self.history.last_fn is None
 
     def is_constant(self) -> bool:
+
         return self.history is None
 
     @property
     def parents(self) -> Iterable[Variable]:
+
         assert self.history is not None
         return self.history.inputs
 
     def chain_rule(self, d_output: Any) -> Iterable[Tuple[Variable, Any]]:
+
         h = self.history
         assert h is not None
         assert h.last_fn is not None
@@ -174,6 +200,7 @@ class Scalar:
         if d_output is None:
             d_output = 1.0
         backpropagate(self, d_output)
+
 
 def derivative_check(f: Any, *scalars: Scalar) -> None:
     """

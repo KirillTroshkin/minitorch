@@ -16,38 +16,50 @@ from .tensor_data import (
 
 if TYPE_CHECKING:
     from .tensor import Tensor
-    from .tensor_data import Index, Shape, Storage, Strides
+    from .tensor_data import Shape, Storage, Strides
+
 
 class MapProto(Protocol):
+
     def __call__(self, x: Tensor, out: Optional[Tensor] = ..., /) -> Tensor:
+
         ...
 
+
 class TensorOps:
+
     @staticmethod
     def map(fn: Callable[[float], float]) -> MapProto:
+
         pass
 
     @staticmethod
     def cmap(fn: Callable[[float], float]) -> Callable[[Tensor, Tensor], Tensor]:
+
         pass
 
     @staticmethod
     def zip(fn: Callable[[float, float], float]) -> Callable[[Tensor, Tensor], Tensor]:
+
         pass
 
     @staticmethod
     def reduce(
+
         fn: Callable[[float, float], float], start: float = 0.0
     ) -> Callable[[Tensor, int], Tensor]:
         pass
 
     @staticmethod
     def matrix_multiply(a: Tensor, b: Tensor) -> Tensor:
+
         raise NotImplementedError("Not implemented in this assignment")
 
     cuda = False
 
+
 class TensorBackend:
+
     def __init__(self, ops: Type[TensorOps]):
         """
         Dynamically construct a tensor backend based on a `tensor_ops` object
@@ -97,7 +109,9 @@ class TensorBackend:
         self.matrix_multiply = ops.matrix_multiply
         self.cuda = ops.cuda
 
+
 class SimpleOps(TensorOps):
+
     @staticmethod
     def map(fn: Callable[[float], float]) -> MapProto:
         """
@@ -132,6 +146,7 @@ class SimpleOps(TensorOps):
         f = tensor_map(fn)
 
         def ret(a: Tensor, out: Optional[Tensor] = None) -> Tensor:
+
             if out is None:
                 out = a.zeros(a.shape)
             f(*out.tuple(), *a.tuple())
@@ -141,7 +156,8 @@ class SimpleOps(TensorOps):
 
     @staticmethod
     def zip(
-        fn: Callable[[float, float], float]
+
+        fn: Callable[[float, float], float],
     ) -> Callable[["Tensor", "Tensor"], "Tensor"]:
         """
         Higher-order tensor zip function ::
@@ -172,6 +188,7 @@ class SimpleOps(TensorOps):
         f = tensor_zip(fn)
 
         def ret(a: "Tensor", b: "Tensor") -> "Tensor":
+
             if a.shape != b.shape:
                 c_shape = shape_broadcast(a.shape, b.shape)
             else:
@@ -179,10 +196,12 @@ class SimpleOps(TensorOps):
             out = a.zeros(c_shape)
             f(*out.tuple(), *a.tuple(), *b.tuple())
             return out
+
         return ret
 
     @staticmethod
     def reduce(
+
         fn: Callable[[float, float], float], start: float = 0.0
     ) -> Callable[["Tensor", int], "Tensor"]:
         """
@@ -209,24 +228,29 @@ class SimpleOps(TensorOps):
         f = tensor_reduce(fn)
 
         def ret(a: "Tensor", dim: int) -> "Tensor":
+
             out_shape = list(a.shape)
             out_shape[dim] = 1
             out = a.zeros(tuple(out_shape))
             out._tensor._storage[:] = start
             f(*out.tuple(), *a.tuple(), dim)
             return out
+
         return ret
 
     @staticmethod
     def matrix_multiply(a: "Tensor", b: "Tensor") -> "Tensor":
+
         raise NotImplementedError("Not implemented in this assignment")
 
     is_cuda = False
 
 # Implementations.
 
+
 def tensor_map(
-    fn: Callable[[float], float]
+
+    fn: Callable[[float], float],
 ) -> Callable[[Storage, Shape, Strides, Storage, Shape, Strides], None]:
     """
     Low-level implementation of tensor map between
@@ -252,6 +276,7 @@ def tensor_map(
     """
 
     def _map(
+
         out: Storage,
         out_shape: Shape,
         out_strides: Strides,
@@ -265,10 +290,13 @@ def tensor_map(
             in_pos = index_to_position(out_index, in_strides)
             out_pos = index_to_position(out_index, out_strides)
             out[out_pos] = fn(in_storage[in_pos])
+
     return _map
 
+
 def tensor_zip(
-    fn: Callable[[float, float], float]
+
+    fn: Callable[[float, float], float],
 ) -> Callable[
     [Storage, Shape, Strides, Storage, Shape, Strides, Storage, Shape, Strides], None
 ]:
@@ -296,6 +324,7 @@ def tensor_zip(
     """
 
     def _zip(
+
         out: Storage,
         out_shape: Shape,
         out_strides: Strides,
@@ -317,10 +346,13 @@ def tensor_zip(
             b_pos = index_to_position(b_index, b_strides)
             out_pos = index_to_position(out_index, out_strides)
             out[out_pos] = fn(a_storage[a_pos], b_storage[b_pos])
+
     return _zip
 
+
 def tensor_reduce(
-    fn: Callable[[float, float], float]
+
+    fn: Callable[[float, float], float],
 ) -> Callable[[Storage, Shape, Strides, Storage, Shape, Strides, int], None]:
     """
     Low-level implementation of tensor reduce.
@@ -336,6 +368,7 @@ def tensor_reduce(
     """
 
     def _reduce(
+
         out: Storage,
         out_shape: Shape,
         out_strides: Strides,
@@ -357,6 +390,8 @@ def tensor_reduce(
                 a_pos = index_to_position(a_index, a_strides)
                 result = fn(result, a_storage[a_pos])
             out[out_pos] = result
+
     return _reduce
+
 
 SimpleBackend = TensorBackend(SimpleOps)
