@@ -1,4 +1,5 @@
 import random
+from pathlib import Path
 
 import chalk as ch
 from chalk import (
@@ -10,11 +11,31 @@ from chalk import (
     rectangle,
     unit_x,
     unit_y,
+    hstrut,
+    vstrut,
+    text,
+    circle,
+    concat,
+    ArrowOpts,
 )
 from colour import Color
-from drawing import aqua, black, lightblue, lightred
+from drawing import aqua, black, lightblue, lightred, white, blue
 
 import minitorch
+
+P2 = tuple
+V2 = tuple
+
+
+class Linear:
+    def __init__(self, w1, w2, b):
+        self.w1 = w1
+        self.w2 = w2
+        self.b = b
+
+    def forward(self, x1, x2):
+        return self.w1 * x1 + self.w2 * x2 + self.b
+
 
 random.seed(10)
 
@@ -183,16 +204,16 @@ def with_points(pts1, pts2, b):
 
 def graph(fn, xs=[], os=[], width=4, offset=0, c=Color("red")):
     "Draw a graph with points on it"
-    path = []
+    path_points = []
     m = 0
     for a in range(100):
         a = width * ((a / 100) - 0.5) - offset
-        path.append((a, fn(a)))
+        path_points.append((a, fn(a)))
         m = max(m, fn(a))
     dia = (
         make_path([(0, 0), (0, m)])
         + make_path([(-width / 2, 0), (width / 2, 0)])
-        + make_path(path).line_color(c).line_width(0.2)
+        + make_path(path_points).line_color(c).line_width(0.2)
     )
 
     for pt in xs:
@@ -205,13 +226,13 @@ def graph(fn, xs=[], os=[], width=4, offset=0, c=Color("red")):
 def show_loss(full_loss):
     d = empty()
     scores = []
-    path = []
+    loss_path = []
     i = 0
     for j, b in enumerate(range(20)):
         b = -1.7 + b / 20
         m = Linear(1, 1, b)
         pt = (b, full_loss(m))
-        path.append(pt)
+        loss_path.append(pt)
         if j % 5 == 0:
             d = d | hstrut(0.5) | show(m).named(("graph", i))
             p = circle(0.01).translate(pt[0], pt[1]).fill_color(black)
