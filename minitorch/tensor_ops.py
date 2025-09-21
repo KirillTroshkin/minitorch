@@ -18,11 +18,9 @@ if TYPE_CHECKING:
     from .tensor import Tensor
     from .tensor_data import Index, Shape, Storage, Strides
 
-
 class MapProto(Protocol):
     def __call__(self, x: Tensor, out: Optional[Tensor] = ..., /) -> Tensor:
         ...
-
 
 class TensorOps:
     @staticmethod
@@ -49,7 +47,6 @@ class TensorOps:
 
     cuda = False
 
-
 class TensorBackend:
     def __init__(self, ops: Type[TensorOps]):
         """
@@ -58,7 +55,6 @@ class TensorBackend:
 
         Args:
             ops : tensor operations object see `tensor_ops.py`
-
 
         Returns :
             A collection of tensor functions
@@ -100,7 +96,6 @@ class TensorBackend:
         self.mul_reduce = ops.reduce(operators.mul, 1.0)
         self.matrix_multiply = ops.matrix_multiply
         self.cuda = ops.cuda
-
 
 class SimpleOps(TensorOps):
     @staticmethod
@@ -166,7 +161,6 @@ class SimpleOps(TensorOps):
                 for j:
                     out[i, j] = fn(a[i, 0], b[0, j])
 
-
         Args:
             fn: function from two floats-to-float to apply
             a (:class:`TensorData`): tensor to zip over
@@ -176,6 +170,7 @@ class SimpleOps(TensorOps):
             :class:`TensorData` : new tensor data
         """
         f = tensor_zip(fn)
+
         def ret(a: "Tensor", b: "Tensor") -> "Tensor":
             if a.shape != b.shape:
                 c_shape = shape_broadcast(a.shape, b.shape)
@@ -203,7 +198,6 @@ class SimpleOps(TensorOps):
                 for i:
                     out[1, j] = fn(out[1, j], a[i, j])
 
-
         Args:
             fn: function from two floats-to-float to apply
             a (:class:`TensorData`): tensor to reduce over
@@ -213,6 +207,7 @@ class SimpleOps(TensorOps):
             :class:`TensorData` : new tensor
         """
         f = tensor_reduce(fn)
+
         def ret(a: "Tensor", dim: int) -> "Tensor":
             out_shape = list(a.shape)
             out_shape[dim] = 1
@@ -228,9 +223,7 @@ class SimpleOps(TensorOps):
 
     is_cuda = False
 
-
 # Implementations.
-
 
 def tensor_map(
     fn: Callable[[float], float]
@@ -273,7 +266,6 @@ def tensor_map(
             out_pos = index_to_position(out_index, out_strides)
             out[out_pos] = fn(in_storage[in_pos])
     return _map
-
 
 def tensor_zip(
     fn: Callable[[float, float], float]
@@ -327,7 +319,6 @@ def tensor_zip(
             out[out_pos] = fn(a_storage[a_pos], b_storage[b_pos])
     return _zip
 
-
 def tensor_reduce(
     fn: Callable[[float, float], float]
 ) -> Callable[[Storage, Shape, Strides, Storage, Shape, Strides, int], None]:
@@ -367,6 +358,5 @@ def tensor_reduce(
                 result = fn(result, a_storage[a_pos])
             out[out_pos] = result
     return _reduce
-
 
 SimpleBackend = TensorBackend(SimpleOps)

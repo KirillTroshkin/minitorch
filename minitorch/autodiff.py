@@ -3,8 +3,6 @@ from typing import Any, Iterable, List, Tuple
 
 from typing_extensions import Protocol
 
-
-
 def central_difference(f: Any, *vals: Any, arg: int = 0, epsilon: float = 1e-6) -> Any:
     r"""
     Computes an approximation to the derivative of `f` with respect to one arg.
@@ -28,9 +26,7 @@ def central_difference(f: Any, *vals: Any, arg: int = 0, epsilon: float = 1e-6) 
     f_minus = f(*vals_list)
     return (f_plus - f_minus) / (2 * epsilon)
 
-
 variable_count = 1
-
 
 class Variable(Protocol):
     def accumulate_derivative(self, x: Any) -> None:
@@ -53,7 +49,6 @@ class Variable(Protocol):
     def chain_rule(self, d_output: Any) -> Iterable[Tuple["Variable", Any]]:
         pass
 
-
 def topological_sort(variable: Variable) -> Iterable[Variable]:
     """
     Computes the topological order of the computation graph.
@@ -66,7 +61,7 @@ def topological_sort(variable: Variable) -> Iterable[Variable]:
     """
     visited = set()
     result = []
-    
+
     def dfs(var):
         if var in visited or var.history is None or var.history.last_fn is None:
             return
@@ -75,10 +70,9 @@ def topological_sort(variable: Variable) -> Iterable[Variable]:
             for input_var in var.history.inputs:
                 dfs(input_var)
         result.append(var)
-    
+
     dfs(variable)
     return result
-
 
 def backpropagate(variable: Variable, deriv: Any) -> None:
     """
@@ -94,10 +88,9 @@ def backpropagate(variable: Variable, deriv: Any) -> None:
     if variable.is_leaf():
         variable.accumulate_derivative(deriv)
         return
-    
+
     for input_var, input_deriv in variable.chain_rule(deriv):
         backpropagate(input_var, input_deriv)
-
 
 @dataclass
 class Context:

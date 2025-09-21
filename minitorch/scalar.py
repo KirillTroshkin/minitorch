@@ -22,7 +22,6 @@ from .scalar_functions import (
 
 ScalarLike = Union[float, int, "Scalar"]
 
-
 @dataclass
 class ScalarHistory:
     """
@@ -40,10 +39,7 @@ class ScalarHistory:
     ctx: Optional[Context] = None
     inputs: Sequence[Scalar] = ()
 
-
-
 _var_count = 0
-
 
 class Scalar:
     """
@@ -178,7 +174,6 @@ class Scalar:
         if d_output is None:
             d_output = 1.0
         backpropagate(self, d_output)
-
 
 def derivative_check(f: Any, *scalars: Scalar) -> None:
     """

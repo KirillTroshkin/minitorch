@@ -27,8 +27,6 @@ from minitorch.operators import (
 
 from .strategies import assert_close, small_floats
 
-
-
 @pytest.mark.task0_1
 @given(small_floats, small_floats)
 def test_same_as_python(x: float, y: float) -> None:
@@ -40,7 +38,6 @@ def test_same_as_python(x: float, y: float) -> None:
     if abs(x) > 1e-5:
         assert_close(inv(x), 1.0 / x)
 
-
 @pytest.mark.task0_1
 @given(small_floats)
 def test_relu(a: float) -> None:
@@ -48,7 +45,6 @@ def test_relu(a: float) -> None:
         assert relu(a) == a
     if a < 0:
         assert relu(a) == 0.0
-
 
 @pytest.mark.task0_1
 @given(small_floats, small_floats)
@@ -58,12 +54,10 @@ def test_relu_back(a: float, b: float) -> None:
     if a < 0:
         assert relu_back(a, b) == 0.0
 
-
 @pytest.mark.task0_1
 @given(small_floats)
 def test_id(a: float) -> None:
     assert id(a) == a
-
 
 @pytest.mark.task0_1
 @given(small_floats)
@@ -71,7 +65,6 @@ def test_lt(a: float) -> None:
     "Check that a - 1.0 is always less than a"
     assert lt(a - 1.0, a) == 1.0
     assert lt(a, a - 1.0) == 0.0
-
 
 @pytest.mark.task0_1
 @given(small_floats)
@@ -81,16 +74,12 @@ def test_max(a: float) -> None:
     assert max(a + 1.0, a) == a + 1.0
     assert max(a, a + 1.0) == a + 1.0
 
-
 @pytest.mark.task0_1
 @given(small_floats)
 def test_eq(a: float) -> None:
     assert eq(a, a) == 1.0
     assert eq(a, a - 1.0) == 0.0
     assert eq(a, a + 1.0) == 0.0
-
-
-
 
 @pytest.mark.task0_2
 @given(small_floats)
@@ -104,14 +93,13 @@ def test_sigmoid(a: float) -> None:
     assert 0.0 <= sigmoid(a) <= 1.0
     assert_close(1.0 - sigmoid(a), sigmoid(-a))
     assert_close(sigmoid(0.0), 0.5)
-    
+
     @given(small_floats, small_floats)
     def check_increasing(x: float, y: float) -> None:
         if x < y and abs(x - y) > 1e-10 and -100 < x < 100 and -100 < y < 100:
             assert sigmoid(x) < sigmoid(y)
-    
-    check_increasing()
 
+    check_increasing()
 
 @pytest.mark.task0_2
 @given(small_floats, small_floats, small_floats)
@@ -119,7 +107,6 @@ def test_transitive(a: float, b: float, c: float) -> None:
     "Test the transitive property of less-than (a < b and b < c implies a < c)"
     if lt(a, b) == 1.0 and lt(b, c) == 1.0:
         assert lt(a, c) == 1.0
-
 
 @pytest.mark.task0_2
 def test_symmetric() -> None:
@@ -130,9 +117,8 @@ def test_symmetric() -> None:
     @given(small_floats, small_floats)
     def check_symmetric(x: float, y: float) -> None:
         assert_close(mul(x, y), mul(y, x))
-    
-    check_symmetric()
 
+    check_symmetric()
 
 @pytest.mark.task0_2
 def test_distribute() -> None:
@@ -145,9 +131,8 @@ def test_distribute() -> None:
         left = mul(z, add(x, y))
         right = add(mul(z, x), mul(z, y))
         assert_close(left, right)
-    
-    check_distribute()
 
+    check_distribute()
 
 @pytest.mark.task0_2
 def test_other() -> None:
@@ -157,17 +142,14 @@ def test_other() -> None:
     @given(small_floats)
     def check_additive_inverse(x: float) -> None:
         assert_close(add(x, neg(x)), 0.0)
-    
+
     @given(small_floats, small_floats)
     def check_equality(x: float, y: float) -> None:
         assert eq(x, x) == 1.0
         assert_close(eq(x, y), eq(y, x))
-    
+
     check_additive_inverse()
     check_equality()
-
-
-
 
 @pytest.mark.task0_3
 @given(small_floats, small_floats, small_floats, small_floats)
@@ -176,7 +158,6 @@ def test_zip_with(a: float, b: float, c: float, d: float) -> None:
     y1, y2 = a + c, b + d
     assert_close(x1, y1)
     assert_close(x2, y2)
-
 
 @pytest.mark.task0_3
 @given(
@@ -189,23 +170,20 @@ def test_sum_distribute(ls1: List[float], ls2: List[float]) -> None:
     is the same as the sum of each element of `ls1` plus each element of `ls2`.
     """
     from minitorch.operators import sum, addLists
-    
+
     left = sum(ls1) + sum(ls2)
     right = sum(addLists(ls1, ls2))
     assert_close(left, right)
-
 
 @pytest.mark.task0_3
 @given(lists(small_floats))
 def test_sum(ls: List[float]) -> None:
     assert_close(sum(ls), sum(ls))
 
-
 @pytest.mark.task0_3
 @given(small_floats, small_floats, small_floats)
 def test_prod(x: float, y: float, z: float) -> None:
     assert_close(prod([x, y, z]), x * y * z)
-
 
 @pytest.mark.task0_3
 @given(lists(small_floats))
@@ -214,21 +192,17 @@ def test_negList(ls: List[float]) -> None:
     for i, j in zip(ls, check):
         assert_close(i, -j)
 
-
 # ## Generic mathematical tests
 
 # For each unit this generic set of mathematical tests will run.
 
-
 one_arg, two_arg, _ = MathTest._tests()
-
 
 @given(small_floats)
 @pytest.mark.parametrize("fn", one_arg)
 def test_one_args(fn: Tuple[str, Callable[[float], float]], t1: float) -> None:
     name, base_fn = fn
     base_fn(t1)
-
 
 @given(small_floats, small_floats)
 @pytest.mark.parametrize("fn", two_arg)
@@ -237,7 +211,6 @@ def test_two_args(
 ) -> None:
     name, base_fn = fn
     base_fn(t1, t2)
-
 
 @given(small_floats, small_floats)
 def test_backs(a: float, b: float) -> None:
