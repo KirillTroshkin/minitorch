@@ -72,18 +72,28 @@ class TensorBackend:
         self.log_map = ops.map(operators.log)
         self.exp_map = ops.map(operators.exp)
         self.id_map = ops.map(operators.id)
+        self.id_zip = ops.zip(operators.id_zip)
         self.id_cmap = ops.cmap(operators.id)
         self.inv_map = ops.map(operators.inv)
+        self.constant_map = ops.map(lambda x: 1.0)
+        self.constant_2_map = ops.map(lambda x: 2.0)
+        self.constant_3_map = ops.map(lambda x: 3.0)
+        self.constant_5_map = ops.map(lambda x: 5.0)
+        self.constant_neg1_map = ops.map(lambda x: -1.0)
 
         # Zips
         self.add_zip = ops.zip(operators.add)
         self.mul_zip = ops.zip(operators.mul)
+        self.div_zip = ops.zip(operators.div)
         self.lt_zip = ops.zip(operators.lt)
         self.eq_zip = ops.zip(operators.eq)
+        self.gt_zip = ops.zip(operators.gt)
         self.is_close_zip = ops.zip(operators.is_close)
         self.relu_back_zip = ops.zip(operators.relu_back)
         self.log_back_zip = ops.zip(operators.log_back)
         self.inv_back_zip = ops.zip(operators.inv_back)
+        self.sigmoid_back_zip = ops.zip(operators.sigmoid_back)
+        self.exp_back_zip = ops.zip(operators.exp_back)
 
         # Reduce
         self.add_reduce = ops.reduce(operators.add, 0.0)
@@ -165,9 +175,7 @@ class SimpleOps(TensorOps):
         Returns:
             :class:`TensorData` : new tensor data
         """
-
         f = tensor_zip(fn)
-
         def ret(a: "Tensor", b: "Tensor") -> "Tensor":
             if a.shape != b.shape:
                 c_shape = shape_broadcast(a.shape, b.shape)
@@ -176,7 +184,6 @@ class SimpleOps(TensorOps):
             out = a.zeros(c_shape)
             f(*out.tuple(), *a.tuple(), *b.tuple())
             return out
-
         return ret
 
     @staticmethod
@@ -206,18 +213,13 @@ class SimpleOps(TensorOps):
             :class:`TensorData` : new tensor
         """
         f = tensor_reduce(fn)
-
         def ret(a: "Tensor", dim: int) -> "Tensor":
             out_shape = list(a.shape)
             out_shape[dim] = 1
-
-            # Other values when not sum.
             out = a.zeros(tuple(out_shape))
             out._tensor._storage[:] = start
-
             f(*out.tuple(), *a.tuple(), dim)
             return out
-
         return ret
 
     @staticmethod
@@ -264,9 +266,12 @@ def tensor_map(
         in_shape: Shape,
         in_strides: Strides,
     ) -> None:
-        # TODO: Implement for Task 2.3.
-        raise NotImplementedError('Need to implement for Task 2.3')
-
+        out_index = np.zeros(MAX_DIMS, dtype=np.int32)
+        for i in range(len(out)):
+            to_index(i, out_shape, out_index)
+            in_pos = index_to_position(out_index, in_strides)
+            out_pos = index_to_position(out_index, out_strides)
+            out[out_pos] = fn(in_storage[in_pos])
     return _map
 
 
@@ -309,9 +314,17 @@ def tensor_zip(
         b_shape: Shape,
         b_strides: Strides,
     ) -> None:
-        # TODO: Implement for Task 2.3.
-        raise NotImplementedError('Need to implement for Task 2.3')
-
+        out_index = np.zeros(MAX_DIMS, dtype=np.int32)
+        a_index = np.zeros(MAX_DIMS, dtype=np.int32)
+        b_index = np.zeros(MAX_DIMS, dtype=np.int32)
+        for i in range(len(out)):
+            to_index(i, out_shape, out_index)
+            broadcast_index(out_index, out_shape, a_shape, a_index)
+            broadcast_index(out_index, out_shape, b_shape, b_index)
+            a_pos = index_to_position(a_index, a_strides)
+            b_pos = index_to_position(b_index, b_strides)
+            out_pos = index_to_position(out_index, out_strides)
+            out[out_pos] = fn(a_storage[a_pos], b_storage[b_pos])
     return _zip
 
 
@@ -340,9 +353,19 @@ def tensor_reduce(
         a_strides: Strides,
         reduce_dim: int,
     ) -> None:
-        # TODO: Implement for Task 2.3.
-        raise NotImplementedError('Need to implement for Task 2.3')
-
+        out_index = np.zeros(MAX_DIMS, dtype=np.int32)
+        a_index = np.zeros(MAX_DIMS, dtype=np.int32)
+        for i in range(len(out)):
+            to_index(i, out_shape, out_index)
+            a_index = out_index.copy()
+            a_index[reduce_dim] = 0
+            out_pos = index_to_position(out_index, out_strides)
+            result = out[out_pos]
+            for j in range(a_shape[reduce_dim]):
+                a_index[reduce_dim] = j
+                a_pos = index_to_position(a_index, a_strides)
+                result = fn(result, a_storage[a_pos])
+            out[out_pos] = result
     return _reduce
 
 

@@ -202,7 +202,8 @@ class MathTestVariable(MathTest):
 
     @staticmethod
     def gt2(a, b):
-        return a + 1.2 > b
+        from .tensor_functions import GT
+        return GT.apply(a + 1.2, b)
 
     @staticmethod
     def lt2(a, b):

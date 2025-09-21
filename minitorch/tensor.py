@@ -14,6 +14,7 @@ from .autodiff import Context, Variable, backpropagate
 from .tensor_data import TensorData
 from .tensor_functions import (
     EQ,
+    GT,
     LT,
     Add,
     All,
@@ -138,6 +139,9 @@ class Tensor:
         "Turns a python number into a tensor with the same backend."
         if isinstance(b, (int, float)):
             c = Tensor.make([b], (1,), backend=self.backend)
+        elif hasattr(b, 'item') and not hasattr(b, '_type_'):
+            # Handle numpy types
+            c = Tensor.make([float(b)], (1,), backend=self.backend)
         else:
             b._type_(self.backend)
             c = b
@@ -170,7 +174,7 @@ class Tensor:
         return EQ.apply(self, self._ensure_tensor(b))
 
     def __gt__(self, b: TensorLike) -> Tensor:
-        return LT.apply(self._ensure_tensor(b), self)
+        return GT.apply(self, self._ensure_tensor(b))
 
     def __neg__(self) -> Tensor:
         return Neg.apply(self)
@@ -264,41 +268,22 @@ class Tensor:
         return Tensor(TensorData(storage, shape, strides), backend=backend)
 
     def expand(self, other: Tensor) -> Tensor:
-        """
-        Method used to allow for backprop over broadcasting.
-        This method is called when the output of `backward`
-        is a different size than the input of `forward`.
-
-
-        Parameters:
-            other : backward tensor (must broadcast with self)
-
-        Returns:
-            Expanded version of `other` with the right derivatives
-
-        """
-
-        # Case 1: Both the same shape.
         if self.shape == other.shape:
             return other
 
-        # Case 2: Backward is a smaller than self. Broadcast up.
         true_shape = TensorData.shape_broadcast(self.shape, other.shape)
         buf = self.zeros(true_shape)
-        self.backend.id_map(other, buf)
+        self.backend.id_zip(other, buf)
         if self.shape == true_shape:
             return buf
 
-        # Case 3: Still different, reduce extra dims.
         out = buf
         orig_shape = [1] * (len(out.shape) - len(self.shape)) + list(self.shape)
         for dim, shape in enumerate(out.shape):
             if orig_shape[dim] == 1 and shape != 1:
                 out = self.backend.add_reduce(out, dim)
         assert out.size == self.size, f"{out.shape} {self.shape}"
-        # START CODE CHANGE (2021)
         return Tensor.make(out._tensor._storage, self.shape, backend=self.backend)
-        # END CODE CHANGE (2021)
 
     def zeros(self, shape: Optional[UserShape] = None) -> Tensor:
         def zero(shape: UserShape) -> Tensor:
@@ -350,7 +335,8 @@ class Tensor:
 
     def chain_rule(self, d_output: Any) -> Iterable[Tuple[Variable, Any]]:
         h = self.history
-        assert h is not None
+        if h is None:
+            return []
         assert h.last_fn is not None
         assert h.ctx is not None
 
