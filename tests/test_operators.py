@@ -164,6 +164,8 @@ def test_zip_with(a: float, b: float, c: float, d: float) -> None:
     lists(small_floats, min_size=5, max_size=5),
     lists(small_floats, min_size=5, max_size=5),
 )
+
+
 def test_sum_distribute(ls1: List[float], ls2: List[float]) -> None:
     """
     Write a test that ensures that the sum of `ls1` plus the sum of `ls2`
