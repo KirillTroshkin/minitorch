@@ -14,7 +14,7 @@ import minitorch
 from . import operators
 from .autodiff import Context
 from .tensor_ops import SimpleBackend, TensorBackend
-# from .tensor_data import index_to_position
+from .tensor_data import index_to_position
 
 if TYPE_CHECKING:
     from typing import Any, List, Tuple

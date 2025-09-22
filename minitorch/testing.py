@@ -202,7 +202,7 @@ class MathTestVariable(MathTest):
 
     @staticmethod
     def gt2(a, b):
-        from .tensor_functions import GT
+        from .scalar_functions import GT
         return GT.apply(a + 1.2, b)
 
     @staticmethod
