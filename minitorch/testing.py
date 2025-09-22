@@ -202,8 +202,12 @@ class MathTestVariable(MathTest):
 
     @staticmethod
     def gt2(a, b):
-        from .scalar_functions import GT
-        return GT.apply(a + 1.2, b)
+        if hasattr(a, 'data'):
+            from .scalar_functions import LT
+            return LT.apply(b, a + 1.2)
+        else:
+            from .tensor_functions import LT
+            return LT.apply(b, a + 1.2)
 
     @staticmethod
     def lt2(a, b):

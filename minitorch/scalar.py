@@ -8,7 +8,6 @@ import numpy as np
 from .autodiff import Context, Variable, backpropagate, central_difference
 from .scalar_functions import (
     EQ,
-    GT,
     LT,
     Add,
     Exp,
